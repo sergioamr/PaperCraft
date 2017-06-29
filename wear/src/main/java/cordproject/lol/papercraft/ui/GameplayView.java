@@ -12,13 +12,14 @@ import android.view.animation.DecelerateInterpolator;
 import java.util.ArrayList;
 import java.util.TimerTask;
 
+import cordproject.lol.papercraft.FlicktekClipReceiver;
 import cordproject.lol.papercraft.controller.GameController;
 import cordproject.lol.papercraft.util.MathUtil;
-import cordproject.lol.papercraft.R;
+import flicktek.lol.papercraft.R;
 import cordproject.lol.papercraft.entity.BulletData;
 import cordproject.lol.papercraft.entity.EnemyData;
 
-public class GameplayView extends MainView {
+public class GameplayView extends MainView implements FlicktekClipReceiver.MyGestureListener {
 
     private float screenRadius;
 
@@ -38,6 +39,7 @@ public class GameplayView extends MainView {
 
     public GameplayView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        FlicktekClipReceiver.setCustomGestures(this);
         setWillNotDraw(false);
         initLanes();
         initFrameTask();
@@ -96,7 +98,7 @@ public class GameplayView extends MainView {
                                         BulletData data = new BulletData();
                                         data.x = muzzleRect.centerX();
 
-                                        data.destination = getWidth()*7/8;
+                                        data.destination = getWidth() * 7 / 8;
                                         data.y = muzzleRect.centerY();
                                         data.speedX = (float) (3 * Math.cos(Math.toRadians(radiusAngle)));
                                         data.speedY = (float) (3 * Math.sin(Math.toRadians(radiusAngle)));
@@ -212,19 +214,19 @@ public class GameplayView extends MainView {
 
     @Override
     protected float getEnemyOrigin() {
-        return screenRadius*3.f;
+        return screenRadius * 3.f;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        screenRadius = MeasureSpec.getSize(widthMeasureSpec)/2;
-        maneuverDistance = MeasureSpec.getSize(widthMeasureSpec)/3;
-        startX = screenRadius*.3f;
+        screenRadius = MeasureSpec.getSize(widthMeasureSpec) / 2;
+        maneuverDistance = MeasureSpec.getSize(widthMeasureSpec) / 3;
+        startX = screenRadius * .3f;
         currentX = -shipLength;
-        currentY = getMeasuredHeight()/2;
-        int marginLeft = (int) ((getMeasuredWidth() - levelCompletionDiameter)/2);
-        int marginTop = (int) (getMeasuredHeight()/8 - levelCompletionDiameter/2);
+        currentY = getMeasuredHeight() / 2;
+        int marginLeft = (int) ((getMeasuredWidth() - levelCompletionDiameter) / 2);
+        int marginTop = (int) (getMeasuredHeight() / 8 - levelCompletionDiameter / 2);
 
         levelCompletionRect.set(marginLeft, marginTop, marginLeft + levelCompletionDiameter,
                 marginTop + levelCompletionDiameter);
@@ -262,14 +264,14 @@ public class GameplayView extends MainView {
                     drawBooster(canvas);
                     canvas.drawBitmap(shipShadow, shadowMatrix, null);
                     canvas.drawBitmap(shipBitmap, transMatrix, null);
-                } else if (invulnerabilityTicker == 0){
+                } else if (invulnerabilityTicker == 0) {
                     canvas.drawBitmap(shipShadow, shadowMatrix, null);
                     drawBooster(canvas);
                     canvas.drawBitmap(shipBitmap, transMatrix, null);
                 }
             }
 
-            shipRect.set(0, 0, shipLength*3/4, shipHeight);
+            shipRect.set(0, 0, shipLength * 3 / 4, shipHeight);
             muzzleRect.set(shipLength * 3 / 4, 0, shipLength, shipHeight);
             transMatrix.mapRect(shipRect);
             transMatrix.mapRect(muzzleRect);
@@ -315,12 +317,12 @@ public class GameplayView extends MainView {
 
         boosterPath.moveTo(0, 0);
         boosterPath.lineTo(0, boosterHeight);
-        boosterPath.lineTo(-boosterLength + boosterPointX, boosterHeight/2 + boosterPointY);
+        boosterPath.lineTo(-boosterLength + boosterPointX, boosterHeight / 2 + boosterPointY);
 
         boosterPath.close();
-        boosterTransMat.setTranslate(currentX + maneuverX, currentY + maneuverY - boosterHeight*5/8);
+        boosterTransMat.setTranslate(currentX + maneuverX, currentY + maneuverY - boosterHeight * 5 / 8);
 
-        boosterRotMat.setRotate(rotAngle + radiusAngle, shipLength / 2, boosterHeight/2);
+        boosterRotMat.setRotate(rotAngle + radiusAngle, shipLength / 2, boosterHeight / 2);
         boosterTransMat.preConcat(boosterRotMat);
         boosterPath.transform(boosterTransMat);
         canvas.drawPath(boosterPath, boosterPaint);
@@ -328,18 +330,67 @@ public class GameplayView extends MainView {
         boosterPathSmall.reset();
 
         boosterPathSmall.moveTo(0, 0);
-        boosterPathSmall.lineTo(0,boosterHeight*0.75f);
-        boosterPathSmall.lineTo(-boosterLength*0.75f + boosterPointSmallX, boosterHeight*0.375f + boosterPointSmallY);
+        boosterPathSmall.lineTo(0, boosterHeight * 0.75f);
+        boosterPathSmall.lineTo(-boosterLength * 0.75f + boosterPointSmallX, boosterHeight * 0.375f + boosterPointSmallY);
 
         boosterPathSmall.close();
-        boosterTransMatSmall.setTranslate(currentX + maneuverX, currentY + maneuverY - (boosterHeight*0.75f)/4);
+        boosterTransMatSmall.setTranslate(currentX + maneuverX, currentY + maneuverY - (boosterHeight * 0.75f) / 4);
 
-        boosterRotMatSmall.setRotate(rotAngle + radiusAngle, shipLength/2, boosterHeight*0.375f);
+        boosterRotMatSmall.setRotate(rotAngle + radiusAngle, shipLength / 2, boosterHeight * 0.375f);
         boosterTransMatSmall.preConcat(boosterRotMatSmall);
         boosterPathSmall.transform(boosterTransMatSmall);
         canvas.drawPath(boosterPathSmall, boosterPaintSmall);
     }
 
+    public void moveShip(int localDeltaY) {
+        if (gameController.getGameState() != GameController.PLAYING) {
+            return;
+        }
+
+        deltaY = localDeltaY;
+
+        radiusAngle = MathUtil.lerp(radiusAngle, MathUtil.toDegrees(Math.asin((screenRadius - (currentY + deltaY)) / (screenRadius * 3.f))), 0.9f);
+        radiusAngle = Math.min(11, Math.max(radiusAngle, -11));
+
+        currentY = (float) (screenRadius * 3.f * -Math.sin(MathUtil.toRadians(radiusAngle))) + screenRadius;
+        maneuverY = (float) (currentManeuverDist * Math.sin(Math.toRadians(radiusAngle)));
+        maneuverX = (float) (currentManeuverDist * Math.cos(Math.toRadians(radiusAngle)));
+        currentX = (float) ((screenRadius * -Math.cos(MathUtil.toRadians(radiusAngle))) + 1.3f * screenRadius);
+        transMatrix.reset();
+
+        if (Math.abs(deltaY) >= touchSlop) {
+            lastDirection = deltaY > 0 ? BACKWARD : deltaY < 0 ? FORWARD : NEUTRAL;
+        }
+    }
+
+    @Override
+    public void onGestureReceived(String gesture) {
+        switch (gesture) {
+            case FlicktekClipReceiver.EXTRA_GESTURE_ENTER:
+                switch (gameController.getGameState()) {
+                    case GameController.PLAYING:
+                        if (!dead) {
+                            startManeuver();
+                        }
+                        break;
+                    case GameController.TITLE:
+                        startGameTitleTransition();
+                        break;
+                    case GameController.END_STATS:
+                        startStatsFadeOutTransition();
+                        break;
+                }
+                break;
+            case FlicktekClipReceiver.EXTRA_GESTURE_DOWN:
+                moveShip(30);
+                break;
+
+            case FlicktekClipReceiver.EXTRA_GESTURE_UP:
+                moveShip(-30);
+                break;
+
+        }
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -440,8 +491,8 @@ public class GameplayView extends MainView {
                         currentManeuverDist = (float) animation.getAnimatedValue();
                         maneuverX = (float) (currentManeuverDist * Math.cos(Math.toRadians(radiusAngle)));
                         maneuverY = (float) (currentManeuverDist * Math.sin(Math.toRadians(radiusAngle)));
-                        boosterLerpRateX = Math.min(LERP_RATE_MAX, boosterLerpRateX +.1f);
-                        boosterLerpRateSmallX = Math.min(LERP_RATE_MAX, boosterLerpRateSmallX +.1f);
+                        boosterLerpRateX = Math.min(LERP_RATE_MAX, boosterLerpRateX + .1f);
+                        boosterLerpRateSmallX = Math.min(LERP_RATE_MAX, boosterLerpRateSmallX + .1f);
 
                         if (animation.getAnimatedFraction() > 0.65f) {
                             int sign = 1;
@@ -524,8 +575,8 @@ public class GameplayView extends MainView {
                     maneuverX = (float) (currentManeuverDist * Math.cos(Math.toRadians(radiusAngle)));
                     maneuverY = (float) (currentManeuverDist * Math.sin(Math.toRadians(radiusAngle)));
 
-                    boosterLerpRateX = Math.min(LERP_RATE_MAX, boosterLerpRateX +.1f);
-                    boosterLerpRateSmallX = Math.min(LERP_RATE_MAX, boosterLerpRateSmallX +.1f);
+                    boosterLerpRateX = Math.min(LERP_RATE_MAX, boosterLerpRateX + .1f);
+                    boosterLerpRateSmallX = Math.min(LERP_RATE_MAX, boosterLerpRateSmallX + .1f);
 
 
                     int sign = 1;
@@ -586,4 +637,5 @@ public class GameplayView extends MainView {
         });
         maneuverBack.start();
     }
+
 }

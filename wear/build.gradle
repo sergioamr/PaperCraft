@@ -3,10 +3,10 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.0"
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
-        applicationId "cordproject.lol.papercraft"
+        applicationId "flicktek.lol.papercraft"
         minSdkVersion 20
         targetSdkVersion 23
         versionCode 2

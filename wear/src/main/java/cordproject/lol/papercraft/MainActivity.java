@@ -43,10 +43,10 @@ import cordproject.lol.papercraft.ui.GameView;
 import cordproject.lol.papercraftshared.entity.AchievementData;
 import cordproject.lol.papercraftshared.util.AchievementsUtil;
 import cordproject.lol.papercraftshared.util.SharedConstants;
+import flicktek.lol.papercraft.R;
 
 
-
-public class MainActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks, DataApi.DataListener, GoogleApiClient.OnConnectionFailedListener, MessageApi.MessageListener {
+public class MainActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks, DataApi.DataListener, GoogleApiClient.OnConnectionFailedListener, MessageApi.MessageListener{
 
     private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
             new SimpleDateFormat("HH:mm", Locale.US);
@@ -154,7 +154,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         gameController.removeListener(gameListener);
 
         super.onPause();
-
+        FlicktekClipReceiver.closeApplication(this);
     }
 
     private void stopPlayingMusic() {
@@ -175,6 +175,8 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FlicktekClipReceiver.connectClip(this);
+
         setContentView(R.layout.activity_main);
         setAmbientEnabled();
 
